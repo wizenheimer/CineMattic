@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .models import Movie
+from .validator import name_length
 
 
 class MovieSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    name = serializers.CharField(max_length=250)
+    name = serializers.CharField(max_length=250, validators=[name_length])
     description = serializers.CharField()
     rating = serializers.DecimalField(decimal_places=1, max_digits=1)
 
@@ -18,3 +19,14 @@ class MovieSerializer(serializers.Serializer):
         instance.rating = validated_data.get("rating", instance.rating)
         instance.save()
         return instance
+
+    def validate_name(self, value):
+        if len(value) < 2:
+            return serializers.ValidationError("Name's too short")
+        else:
+            return value
+
+    def validate(self, attrs):
+        if attrs["name"] == attrs["description"]:
+            raise serializers.ValidationError("Name and description shouldn't be same")
+        return attrs
